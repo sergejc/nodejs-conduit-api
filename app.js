@@ -1,20 +1,20 @@
-var fs = require('fs'),
-    http = require('http'),
-    path = require('path'),
-    methods = require('methods'),
-    express = require('express'),
-    bodyParser = require('body-parser'),
-    session = require('express-session'),
-    cors = require('cors'),
-    passport = require('passport'),
-    errorhandler = require('errorhandler'),
-    mongoose = require('mongoose');
+const fs = require('fs');
+const http = require('http');
+const path = require('path');
+const methods = require('methods');
+const express = require('express');
+const bodyParser = require('body-parser');
+const session = require('express-session');
+const cors = require('cors');
+const passport = require('passport');
+const errorhandler = require('errorhandler');
+const mongoose = require('mongoose');
 
-var isProduction = process.env.NODE_ENV === 'production';
+const isProduction = process.env.NODE_ENV === 'production';
 
 
 // Create global app object
-var app = express();
+const app = express();
 
 app.use(cors());
 
@@ -45,7 +45,7 @@ app.use(require('./routes'));
 
 /// catch 404 and forward to error handler
 app.use(function(req, res, next) {
-  var err = new Error('Not Found');
+  const err = new Error('Not Found');
   err.status = 404;
   next(err);
 });
@@ -78,6 +78,6 @@ app.use(function(err, req, res, next) {
 });
 
 // finally, let's start our server...
-var server = app.listen( process.env.PORT || 3000, function(){
+const server = app.listen( process.env.PORT || 3000, function(){
   console.log('Listening on port ' + server.address().port);
 });
