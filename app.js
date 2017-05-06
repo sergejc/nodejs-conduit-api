@@ -39,8 +39,9 @@ if(isProduction){
   mongoose.set('debug', true);
 }
 
-app.use(require('./routes'));
 require('./models/User');
+require('./config/passport');
+app.use(require('./routes'));
 
 /// catch 404 and forward to error handler
 app.use(function(req, res, next) {
