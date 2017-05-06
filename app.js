@@ -12,6 +12,7 @@ var fs = require('fs'),
 
 var isProduction = process.env.NODE_ENV === 'production';
 
+
 // Create global app object
 var app = express();
 
@@ -39,6 +40,7 @@ if(isProduction){
 }
 
 app.use(require('./routes'));
+require('./models/User');
 
 /// catch 404 and forward to error handler
 app.use(function(req, res, next) {
