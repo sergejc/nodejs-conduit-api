@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const uniqValidator = require('mongoose-unique-validator');
 const slug = require('slug');
+const User = mongoose.model('User');
 
 /**
  * ArticleSchema
@@ -49,10 +50,23 @@ ArticleSchema.methods.toJSONFor = function(user) {
         createdAt: this.createdAt,
         updatedAt: this.updatedAt,
         tagList: this.tagList,
+        favorited: user ? user.isFavorite(this._id) : false,
         favoritesCount: this.favoritesCount,
         author: this.author.toProfileJSONFor(user)
     };
-}
+};
+
+/**
+ * Updates an article's favorite count
+ */
+ArticleSchema.methods.updateFavoriteCount = function() {
+    return User.count({
+        favorites: {$in: [this._id]}
+    }).then(count => {
+        this.favoritesCount = count;
+        return this.save();
+    });
+};
 
 ArticleSchema.plugin(uniqValidator, {message: 'is already taken'});
 

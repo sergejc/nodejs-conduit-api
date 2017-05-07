@@ -13,7 +13,8 @@ const UserSchema = new mongoose.Schema({
     bio: String,
     image: String,
     hash: String,
-    salt: String
+    salt: String,
+    favorites: [{type: mongoose.Schema.Types.ObjectId, ref: 'Article'}]
 }, {timestamp: true});
 
 UserSchema.plugin(uniqValidator, {message: 'is already taken'});
@@ -60,7 +61,7 @@ UserSchema.methods.generateJWT = function() {
         username: this.username,
         exp: parseInt(exp.getTime() / 1000)
     }, secret);
-}
+};
 
 
 /**
@@ -84,6 +85,34 @@ UserSchema.methods.toProfileJSONFor = function(user) {
         image: this.image || 'https://static.productionready.io/images/smiley-cyrus.jpg',
         following: false
     }
+};
+
+/**
+ * Favorite an article
+ */
+UserSchema.methods.favorite = function(id) {
+    if(this.favorites.indexOf(id) === -1) {
+        this.favorites.push(id);
+    }
+
+    return this.save();
+};
+
+/**
+ * Unfavorite an article
+ */
+UserSchema.methods.unfavorite = function(id) {
+    this.favorites.remove(id);
+    return this.save();
+}
+
+/**
+ * Check if an article already favorited
+ */
+UserSchema.methods.isFavorite = function(id) {
+    return this.favorites.some(favoriteId => {
+        return favoriteId.toString() === id.toString();
+    });
 }
 
 mongoose.model('User', UserSchema);
