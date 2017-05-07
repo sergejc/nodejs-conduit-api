@@ -22,7 +22,6 @@ UserSchema.plugin(uniqValidator, {message: 'is already taken'});
  * Generating a hash from given password and salt
  */
 function generateHash(password, salt) {
-    debugger;
     return crypto.pbkdf2Sync(password, salt, 1000, 512, 'sha512').toString('hex');
 }
 
@@ -61,7 +60,8 @@ UserSchema.methods.generateJWT = function() {
         username: this.username,
         exp: parseInt(exp.getTime() / 1000)
     }, secret);
-};
+}
+
 
 /**
  * JSON representation of a user for authentication
