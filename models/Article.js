@@ -7,12 +7,12 @@ const slug = require('slug');
  */
 const ArticleSchema = new mongoose.Schema({
     slug: {type: String, lowercase: true, unique: true},
-    title: String,
+    title: {type: String, unique: true},
     description: String,
     body: String,
     favoritesCount: {type: Number, default: 0},
     tagList: [{type: String}],
-    author: {type: mongoose.Schema.Types.ObjectId, refs: 'User'}
+    author: {type: mongoose.Schema.Types.ObjectId, ref: 'User'}
 }, {timestamp: true});
 
 /**
@@ -26,7 +26,7 @@ function createSlug(title) {
  * Create a model method for generating unique article slugs
  */
 ArticleSchema.methods.slugify = function() {
-    this.slug = createSlug(title);
+    this.slug = createSlug(this.title);
 }
 
 /**
@@ -40,7 +40,7 @@ ArticleSchema.pre('validate', function(next) {
 /**
  * Represent an article in JSON
  */
-ArticleSchema.methods.toJSOnFor = function(user) {
+ArticleSchema.methods.toJSONFor = function(user) {
     return {
         slug: this.slug,
         title: this.title,
@@ -55,3 +55,5 @@ ArticleSchema.methods.toJSOnFor = function(user) {
 }
 
 ArticleSchema.plugin(uniqValidator, {message: 'is already taken'});
+
+mongoose.model('Article', ArticleSchema);

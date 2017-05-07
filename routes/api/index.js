@@ -1,5 +1,9 @@
 var router = require('express').Router();
 
+router.use('/', require('./users'));
+router.use('/profiles', require('./profiles'));
+router.use('/articles', require('./articles'));
+
 function combineErrors(err) {
     return Object.keys(err.errors).reduce((errors, key) => {
         errors[key] = err.errors[key].message;
@@ -19,8 +23,5 @@ router.use((err, req, res, next) => {
         errors: combineErrors(err)
     });
 });
-
-router.use('/', require('./users'));
-router.use('/profiles', require('./profiles'));
 
 module.exports = router;
