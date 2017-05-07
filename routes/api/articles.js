@@ -3,6 +3,7 @@ const passport = require('passport');
 const mongoose = require('mongoose');
 const Article = mongoose.model('Article');
 const User = mongoose.model('User');
+const Comment = mongoose.model('Comment');
 const auth = require('../auth');
 
 /**
@@ -30,7 +31,6 @@ router.post('/', auth.required, function(req, res, next) {
         article.author = user;
 
         return article.save().then(function() {
-            console.log(article.author);
             return res.json({article: article.toJSONFor(user)});
         });
     }).catch(next);
@@ -119,6 +119,80 @@ router.delete('/:article/favorite', auth.required, (req, res, next) => {
             });
         });
     }).catch(next);
+});
+
+/**
+ * Endpoint to create comments on articles
+ */
+router.post('/:article/comments', auth.required, (req, res, next) => {
+    User.findById(req.payload.id).then(user => {
+        if(!user) return res.sendStatus(401);
+
+        const comment = new Comment(req.body.comment);
+        comment.article = req.article;
+        comment.author = user;
+
+        return comment.save().then(() => {
+            req.article.comments.push(comment);
+
+            return req.article.save().then(article => {
+                res.json({comment: comment.toJSONFor(user)});
+            });
+        });
+    }).catch(next);
+});
+
+/**
+ * endpoint to list comments on articles
+ */
+router.get('/:article/comments', auth.optional, (req, res, next) => {
+    Promise.resolve(req.payload ? User.findById(req.payload.id) : null).then(user => {
+        return req.article.populate({
+            path: 'comments',
+            populate: {
+                path: 'author'
+            },
+            options: {
+                sort: {
+                    createdAt: 'desc'
+                }
+            }
+        }).execPopulate().then(article => {
+            return res.json({
+                comments: req.article.comments.map(comment => {
+                    return comment.toJSONFor(user);
+                })
+            });
+        });
+    }).catch(next);
+});
+
+/**
+ * Middleware for resolving the :comment
+ */
+router.param('comment', (req, res, next, id) => {
+    Comment.findById(id).then(comment => {
+        if(!comment) return res.sendStatus(404);
+
+        req.comment = comment;
+
+        return next();
+    }).catch(next);
+});
+
+
+/**
+ * Endpoint to destroy comments on articles
+ */
+router.delete('/:article/comments/:comment', auth.required, (req, res, next) => {
+    if(req.comment.author.toString() !== req.payload.id.toString()) {
+        return res.sendStatus(403);
+    }
+
+    req.article.comments.remove(req.comment._id);
+    req.article.save()
+        .then(Comment.find({_id: req.comment._id}).remove().exec())
+        .then(() => res.sendStatus(204));
 });
 
 module.exports = router;
