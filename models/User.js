@@ -125,7 +125,7 @@ UserSchema.methods.follow = function(id) {
     }
 
     return this.save();
-});
+};
 
 /**
  * If a user is following another user
@@ -134,7 +134,14 @@ UserSchema.methods.isFollowing = function(id) {
     return this.following.some(function(followId) {
         return followId.toString() === id.toString();
     });
-});
+};
 
+/**
+ * Unfollowing another user
+ */
+UserSchema.methods.unfollow = function(id) {
+    this.following.remove(id);
+    return this.save();
+};
 
 mongoose.model('User', UserSchema);
