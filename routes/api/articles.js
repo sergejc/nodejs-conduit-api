@@ -195,4 +195,106 @@ router.delete('/:article/comments/:comment', auth.required, (req, res, next) => 
         .then(() => res.sendStatus(204));
 });
 
+/**
+ * End point to list all articles
+ */
+router.get('/', auth.optional, (req, res, next) => {
+    const query = {};
+    const limit = 20;
+    const offset = 0;
+
+    if('limit' in req.query) {
+        limit = Number(req.query.limit);
+    }
+
+    if('offset' in req.query) {
+        offset = Number(req.query.offset);
+    }
+
+    if('tag' in req.query) {
+        query.tagList = {"$in" : [req.query.tag]};
+    }
+
+    Promise.all([
+        req.query.author ? User.findOne({username: req.query.author}) : null,
+        req.query.favorite ? User.findOne({username: req.query.favorite}) : null
+    ]).then(results => {
+        const author = results[0];
+        const favorite = results[1];
+
+        if(author) {
+            query.author = author._id;
+        }
+
+        if(favorite) {
+            query._id = {$in: favorite.unfavorites};
+        }
+        else if(req.query.favorited) {
+            query._id = {$in: []}
+        }
+
+        return Promise.all([
+            Article.find(query)
+            .limit(limit)
+            .skip(offset)
+            .sort({createdAt: 'desc'})
+            .populate('author')
+            .exec(),
+            Article.count(query).exec(),
+            req.payload ? User.findById(req.payload.id) : null
+        ]).then(result => {
+            const articles = result[0];
+            const articlesCount = result[1];
+            const user = result[2];
+
+            return res.json({
+                articles: articles.map(article => {
+                    return article.toJSONFor(user);
+                }),
+                articlesCount: articlesCount
+            });
+        });
+    }).catch(next);
+});
+
+/**
+ * Retrieving articles authored by users being followed
+ */
+router.get('/feed', auth.required, (req, res, next) => {
+    const limit = 20;
+    const offset = 0;
+
+    if('limit' in req.query) {
+        limit = Numbe(req.query.limit);
+    }
+
+    if('offset' in req.query) {
+        offset = Numbe(req.query.offset)
+    }
+
+    User.findById(req.payload.id).then(user => {
+        if(!user) return res.sendStatus(401);
+
+        Promise.all([
+            Article.find({author: {$in: user.following}})
+                .limit(limit)
+                .skip(offset)
+                .populate('author')
+                .exec(),
+            Article.count({author: {$in: user.following}})
+        ]).then(results => {
+            const articles = results[0];
+            const articlesCount = results[1];
+
+
+            return res.json({
+                articles: articles.map(article => {
+                    return article.toJSONFor(user)
+                }),
+                articlesCount: articlesCount
+            });
+        }).catch(next);
+    });
+});
+
 module.exports = router;
